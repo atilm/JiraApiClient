@@ -58,7 +58,7 @@ class JiraClient:
         url = f"{self.base_url}/search/jql"
         params = {
             "jql": jql,
-            "fields": f"summary,status,{self.jira_project.start_data_field_id},duedate"
+            "fields": f"summary,description,status,{self.jira_project.start_data_field_id},duedate"
         }
         response = requests.get(url, headers=self.headers, params=params, auth=self.auth)
         response.raise_for_status()
@@ -68,6 +68,7 @@ class JiraClient:
             {
                 "key": issue["key"],
                 "summary": issue["fields"]["summary"],
+                "description": issue["fields"]["description"],
                 "status": issue["fields"]["status"]["name"],
                 "start_date": issue["fields"][self.jira_project.start_data_field_id],
                 "due_date": issue["fields"]["duedate"]
@@ -91,7 +92,7 @@ class JiraClient:
         url = f"{self.base_url}/search/jql"
         params = {
             "jql": jql,
-            "fields": f"summary,status,created,updated,{self.jira_project.actual_start_date_field_id},{self.jira_project.actual_end_date_field_id}"
+            "fields": f"summary,description,status,created,{self.jira_project.actual_start_date_field_id},{self.jira_project.actual_end_date_field_id}"
         }
         response = requests.get(url, headers=self.headers, params=params, auth=self.auth)
         response.raise_for_status()
@@ -105,7 +106,7 @@ class JiraClient:
         # Get epic details
         url = f"{self.base_url}/issue/{epic_key}"
         params = {
-            "fields": f"summary,status,{self.jira_project.start_data_field_id},duedate"
+            "fields": f"summary,description,status,{self.jira_project.start_data_field_id},duedate"
         }
         response = requests.get(url, headers=self.headers, params=params, auth=self.auth)
         response.raise_for_status()
@@ -119,6 +120,7 @@ class JiraClient:
         epic = Epic()
         epic.key = epic_key
         epic.summary = epic_response.get("summary")
+        epic.description = epic_response.get("description")
         epic.status = epic_response.get("status", {}).get("name")
         epic.start_date = epic_response.get(self.jira_project.start_data_field_id)
         epic.due_date = epic_response.get("duedate")
@@ -130,6 +132,8 @@ class JiraClient:
         issue = Issue()
         issue.issue_id = issue_response["key"]
         issue.title = issue_response["fields"]["summary"]
+        issue.description = self._adf2textv2(issue_response["fields"]["description"])
+        # issue.description = issue_response["fields"]["description"]
         issue.status = issue_response["fields"]["status"]["name"]
         # issue.done_date = self.get_done_date_from_changelog(issue.issue_id)
         issue.created_date = self._extract_date_from_iso_datetime(issue_response["fields"]["created"])
@@ -144,6 +148,27 @@ class JiraClient:
         if "T" in datetime_str:
             return datetime_str.split("T")[0]
         return datetime_str
+    
+    def _adf2textv2(self, data):
+        """Convert Atlassian Document Format (ADF) to plain text."""
+        if not data or 'content' not in data:
+            return ""
+
+        text = ""
+        for content in data['content']:
+            if content['type'] == 'paragraph':
+                pass
+            elif content['type'] == 'heading':
+                text += "\n "
+            elif content['type'] == 'listItem':
+                text += "\n* "
+            elif content['type'] == 'inlineCard':
+                text += " ".join(content['attrs'].values())
+            elif content['type'] == 'text':
+                text += content['text']
+            if 'content' in content.keys():
+                text += self._adf2textv2(content)
+        return text
 
     # def get_done_date_from_changelog(self, issue_key) -> str:
     #     # Get the status history for the issue

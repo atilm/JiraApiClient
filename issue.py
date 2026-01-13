@@ -2,6 +2,7 @@ class Issue:
     def __init__(self):
         self.issue_id: str = None
         self.title: str = None
+        self.description: str = None
         self.status: str = None
         self.created_date: str = None
         self.start_date: str = None
@@ -11,6 +12,7 @@ class Issue:
         return {
             "issue_id": self.issue_id,
             "title": self.title,
+            "description": self.description,
             "status": self.status,
             "created_date": self.created_date,
             "start_date": self.start_date,
