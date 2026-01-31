@@ -8,6 +8,7 @@ class JiraProjectMetaData:
     def __init__(self):
         self.base_url: str = ""
         self.project_key: str = ""
+        self.estimation_field_id : str = ""
         self.start_data_field_id: str = ""
         self.actual_start_date_field_id: str = ""
         self.actual_end_date_field_id: str = ""
@@ -15,6 +16,7 @@ class JiraProjectMetaData:
     def __str__(self):
         return (f"JiraProjectMetaData(base_url={self.base_url},\n"
                 f"project_key={self.project_key},\n"
+                f"estimation_field_id={self.estimation_field_id},\n"
                 f"start_data_field_id={self.start_data_field_id},\n"
                 f"actual_start_date_field_id={self.actual_start_date_field_id},\n"
                 f"actual_end_date_field_id={self.actual_end_date_field_id})")
